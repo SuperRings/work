@@ -6,7 +6,6 @@ interface User {
     email: string;
     password: string;
     salt: string;
-    STIME: string;
 }
 
 export default {
@@ -18,11 +17,16 @@ export default {
         if (pathname === '/api/register' && request.method === 'POST') {
             return this.handleRegister(request, env);
         }
+        //请求登录接口
+        if (pathname === '/api/login' && request.method === 'POST') 
+        {
 
-        return new Response('Not Found', { status: 404 });
+        }
+        return new Response('', { status: 404 });
     },
 
-    async handleRegister(request: Request, env: Env): Promise<Response> {
+    async handleRegister(request: Request, env: Env): Promise<Response>
+    {
         try {
             // 解析请求体
             const requestBody = await request.json<{ email: string; password: string }>();
@@ -56,7 +60,8 @@ export default {
                 'INSERT INTO PLAYER (email, password, SALT, STIME) VALUES (?, ?, ?, ?)'
             ).bind(email, passwordHash, salt, new Date().toISOString()).run();
 
-            if (success) {
+            if (success) 
+            {
                 return new Response(JSON.stringify({ 
                     success: true, 
                     message: 'User registered successfully' 
