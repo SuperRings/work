@@ -40,7 +40,7 @@ export default {
 
             // 检查邮箱是否已存在
             const existingUser = await env.DB.prepare(
-                'SELECT email FROM users WHERE email = ?'
+              'SELECT 1 FROM PLAYER WHERE email = ? LIMIT 1;'
             ).bind(email).first();
 
             if (existingUser) {
@@ -53,7 +53,7 @@ export default {
 
             // 插入新用户
             const { success } = await env.DB.prepare(
-                'INSERT INTO users (email, password, SALT, ETIME) VALUES (?, ?, ?, ?)'
+                'INSERT INTO PLAYER (email, password, SALT, ETIME) VALUES (?, ?, ?, ?)'
             ).bind(email, passwordHash, salt, new Date().toISOString()).run();
 
             if (success) {
