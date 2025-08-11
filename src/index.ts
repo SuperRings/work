@@ -6,6 +6,8 @@ export interface Env {
 interface User {
     email: string;
     password: string;
+    data:string;
+    ETIME:string;
 }
 
 export default {
