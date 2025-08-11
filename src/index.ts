@@ -57,7 +57,6 @@ export default {
             // 生成盐值和密码哈希
             const salt = this.generateSalt();
             const passwordHash = await this.hashPassword(password, salt);
-
             // 插入新用户
             const { success } = await env.DB.prepare(
                 'INSERT INTO PLAYER (email, password, SALT, STIME) VALUES (?, ?, ?, ?)'
@@ -80,6 +79,7 @@ export default {
         }
     },
 
+
     // 生成随机盐值
     generateSalt(): string 
     {
@@ -96,87 +96,83 @@ export default {
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     },
-
-    async handleLogin(request: Request, env: Env): Promise<Response> {
-    try {
-        const { email, password } = await request.json<{ email: string; password: string }>();
-        
-        // 验证输入
-        if (!email || !password) {
-            return this.errorResponse(400, 'Email and password are required');
-        }
-
-        // 查询用户记录（包含密码哈希和盐值）
-        const user = await env.DB.prepare(
-            'SELECT email, password, SALT FROM PLAYER WHERE email = ? LIMIT 1'
-        ).bind(email).first<User>();
-
-        if (!user) {
-            return this.errorResponse(401, 'Invalid email or password');
-        }
-
-        // 校验密码
-        const isValid = await this.verifyPassword(password, user.password, user.salt);
-        
-        if (!isValid) 
-        {
-            return this.errorResponse(401, 'Invalid email or password');
-        }
-
-        // 密码验证通过，生成会话令牌或设置Cookie
-        return new Response(JSON.stringify({ 
-            success: true,
-            message: 'Login successful'
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-    } catch (error: any) {
-        return this.errorResponse(500, `Login error: ${error.message}`);
-    }
-},
-
-// 密码验证方法
-async verifyPassword(inputPassword: string, storedHash: string, salt: string): Promise<boolean> {
-    // 使用相同的哈希算法处理输入密码
-    const inputHash = await this.hashPassword(inputPassword, salt);
-    
-    // 安全地比较两个哈希值（防止时序攻击）
-    return this.secureCompare(inputHash, storedHash);
-},
-
-// 安全字符串比较（防止时序攻击）
-secureCompare(a: string, b: string): boolean {
-    const aBuf = new TextEncoder().encode(a);
-    const bBuf = new TextEncoder().encode(b);
-    
-    if (aBuf.length !== bBuf.length) {
-        return false;
-    }
-    
-    let result = 0;
-    for (let i = 0; i < aBuf.length; i++) {
-        result |= aBuf[i] ^ bBuf[i];
-    }
-    
-    return result === 0;
-},
-
     // 验证邮箱格式
     validateEmail(email: string): boolean {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
     },
 
-    // 错误响应辅助函数
-    errorResponse(status: number, message: string): Response {
-        return new Response(JSON.stringify({ 
-            success: false, 
-            message: message 
-        }), { 
-            status: status,
+    async handleLogin(request: Request, env: Env): Promise<Response> {
+    try {
+        // 1. 解析明文邮箱和密码
+        const { email, password } = await request.json<{ 
+            email: string; 
+            password: string 
+        }>();
+
+        // 2. 基础验证
+        if (!email || !password) {
+            return this.errorResponse(400, '邮箱和密码不能为空');
+        }
+
+        // 3. 查询用户数据（包含密码哈希和盐值）
+        const user = await env.DB.prepare(
+            `SELECT email, password, SALT FROM PLAYER WHERE email = ? LIMIT 1`
+        ).bind(email).first<{
+            email: string;
+            password: string;
+            salt: string;
+        }>();
+
+        // 4. 用户不存在或密码错误（统一返回相同错误信息防止枚举攻击）
+        if (!user) {
+            return this.errorResponse(401, '邮箱或密码错误');
+        }
+
+        // 5. 使用存储的盐值哈希输入密码
+        const inputHash = await this.hashPassword(password, user.salt);
+
+        // 6. 安全比较哈希值（防时序攻击）
+        if (!this.secureCompare(inputHash, user.password)) {
+            return this.errorResponse(401, '邮箱或密码错误');
+        }
+
+        // 7. 登录成功响应
+        return new Response(JSON.stringify({
+            success: true,
+            email: user.email,
+            message: '登录成功'
+        }), {
+            status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
+
+    } catch (error:any) {
+        return this.errorResponse(500, `服务器错误: ${error.message}`);
     }
+},
+
+// 安全字符串比较（防时序攻击）
+secureCompare(a: string, b: string): boolean {
+    const aBuf = new TextEncoder().encode(a);
+    const bBuf = new TextEncoder().encode(b);
+    if (aBuf.length !== bBuf.length) return false;
+
+    let result = 0;
+    for (let i = 0; i < aBuf.length; i++) {
+        result |= aBuf[i] ^ bBuf[i];
+    }
+    return result === 0;
+},
+
+// 错误响应辅助函数
+errorResponse(status: number, message: string): Response {
+    return new Response(JSON.stringify({ 
+        success: false, 
+        message: message 
+    }), { 
+        status: status,
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
 };
