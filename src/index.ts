@@ -6,10 +6,6 @@ export interface Env {
 interface User {
     email: string;
     password: string;
-    data:Blob;
-    deviceid:string;
-    activity:string;
-    key:string;
 }
 
 export default {
