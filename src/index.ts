@@ -1,3 +1,4 @@
+
 export interface Env {
     DB: D1Database;
 }
@@ -6,10 +7,12 @@ interface User {
     email: string;
     password: string;
     salt: string;
+    data:string;
 }
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
+        
         const url = new URL(request.url);
         const pathname = url.pathname;
 
@@ -20,7 +23,7 @@ export default {
         //请求登录接口
         if (pathname === '/api/login' && request.method === 'POST') 
         {
-
+            return this.handleLogin(request, env);
         }
         return new Response('', { status: 404 });
     },
@@ -45,10 +48,10 @@ export default {
             // 检查邮箱是否已存在
             const existingUser = await env.DB.prepare(
               'SELECT 1 FROM PLAYER WHERE email = ? LIMIT 1;'
-            ).bind(email).first();
+            ).bind(email).first();           
 
             if (existingUser) {
-                return this.errorResponse(400, 'Email already exists');
+                return this.errorResponse(400, 'Email already exists in DB');
             }
 
             // 生成盐值和密码哈希
@@ -60,7 +63,7 @@ export default {
                 'INSERT INTO PLAYER (email, password, SALT, STIME) VALUES (?, ?, ?, ?)'
             ).bind(email, passwordHash, salt, new Date().toISOString()).run();
 
-            if (success) 
+            if (success)
             {
                 return new Response(JSON.stringify({ 
                     success: true, 
@@ -78,7 +81,8 @@ export default {
     },
 
     // 生成随机盐值
-    generateSalt(): string {
+    generateSalt(): string 
+    {
         const array = new Uint8Array(16);
         crypto.getRandomValues(array);
         return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
@@ -92,6 +96,72 @@ export default {
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     },
+
+    async handleLogin(request: Request, env: Env): Promise<Response> {
+    try {
+        const { email, password } = await request.json<{ email: string; password: string }>();
+        
+        // 验证输入
+        if (!email || !password) {
+            return this.errorResponse(400, 'Email and password are required');
+        }
+
+        // 查询用户记录（包含密码哈希和盐值）
+        const user = await env.DB.prepare(
+            'SELECT email, password, SALT FROM PLAYER WHERE email = ? LIMIT 1'
+        ).bind(email).first<User>();
+
+        if (!user) {
+            return this.errorResponse(401, 'Invalid email or password');
+        }
+
+        // 校验密码
+        const isValid = await this.verifyPassword(password, user.password, user.salt);
+        
+        if (!isValid) 
+        {
+            return this.errorResponse(401, 'Invalid email or password');
+        }
+
+        // 密码验证通过，生成会话令牌或设置Cookie
+        return new Response(JSON.stringify({ 
+            success: true,
+            message: 'Login successful'
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+    } catch (error: any) {
+        return this.errorResponse(500, `Login error: ${error.message}`);
+    }
+},
+
+// 密码验证方法
+async verifyPassword(inputPassword: string, storedHash: string, salt: string): Promise<boolean> {
+    // 使用相同的哈希算法处理输入密码
+    const inputHash = await this.hashPassword(inputPassword, salt);
+    
+    // 安全地比较两个哈希值（防止时序攻击）
+    return this.secureCompare(inputHash, storedHash);
+},
+
+// 安全字符串比较（防止时序攻击）
+secureCompare(a: string, b: string): boolean {
+    const aBuf = new TextEncoder().encode(a);
+    const bBuf = new TextEncoder().encode(b);
+    
+    if (aBuf.length !== bBuf.length) {
+        return false;
+    }
+    
+    let result = 0;
+    for (let i = 0; i < aBuf.length; i++) {
+        result |= aBuf[i] ^ bBuf[i];
+    }
+    
+    return result === 0;
+},
 
     // 验证邮箱格式
     validateEmail(email: string): boolean {
