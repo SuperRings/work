@@ -6,7 +6,9 @@ export interface Env {
 interface User {
     email: string;
     password: string;
-    data:string;
+    data:Blob;
+    deviceid:string;
+    key:string;
     ETIME:string;
 }
 
@@ -56,7 +58,7 @@ export default {
 
             // 插入新用户
             const { success } = await env.DB.prepare(
-                'INSERT INTO PLAYER (email, password, STIME) VALUES (?, ?, ?, ?)'
+                'INSERT INTO PLAYER (email, password, STIME) VALUES (?, ?, ?)'
             ).bind(email, password, new Date().toISOString()).run();
 
             if (success)
