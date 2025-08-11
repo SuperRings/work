@@ -6,8 +6,10 @@ export interface Env {
 interface User {
     email: string;
     password: string;
-    salt: string;
-    data:string;
+    data:Blob;
+    deviceid:string;
+    activity:string;
+    key:string;
 }
 
 export default {
@@ -54,13 +56,10 @@ export default {
                 return this.errorResponse(400, 'Email already exists in DB');
             }
 
-            // 生成盐值和密码哈希
-            const salt = this.generateSalt();
-            const passwordHash = await this.hashPassword(password, salt);
             // 插入新用户
             const { success } = await env.DB.prepare(
-                'INSERT INTO PLAYER (email, password, SALT, STIME) VALUES (?, ?, ?, ?)'
-            ).bind(email, passwordHash, salt, new Date().toISOString()).run();
+                'INSERT INTO PLAYER (email, password, STIME) VALUES (?, ?, ?, ?)'
+            ).bind(email, password, new Date().toISOString()).run();
 
             if (success)
             {
@@ -80,22 +79,6 @@ export default {
     },
 
 
-    // 生成随机盐值
-    generateSalt(): string 
-    {
-        const array = new Uint8Array(16);
-        crypto.getRandomValues(array);
-        return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-    },
-
-    // 密码哈希处理
-    async hashPassword(password: string, salt: string): Promise<string> {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(password + salt);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    },
     // 验证邮箱格式
     validateEmail(email: string): boolean {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -104,10 +87,10 @@ export default {
 
     async handleLogin(request: Request, env: Env): Promise<Response> {
     try {
-        // 1. 解析明文邮箱和密码
-        const { email, password } = await request.json<{ 
+        const { email, password,deviceid} = await request.json<{ 
             email: string; 
-            password: string 
+            password: string;
+            deviceid:string;
         }>();
 
         // 2. 基础验证
@@ -117,26 +100,20 @@ export default {
 
         // 3. 查询用户数据（包含密码哈希和盐值）
         const user = await env.DB.prepare(
-            `SELECT email, password, SALT FROM PLAYER WHERE email = ? LIMIT 1`
+            `SELECT email, password FROM PLAYER WHERE email = ? LIMIT 1`
         ).bind(email).first<{
             email: string;
             password: string;
-            salt: string;
         }>();
 
         // 4. 用户不存在或密码错误（统一返回相同错误信息防止枚举攻击）
-        if (!user) {
+        if (!user) 
+        {
             return this.errorResponse(401, '邮箱或密码错误1');
         }
-
-        // 5. 使用存储的盐值哈希输入密码
-        const inputHash = await this.hashPassword(password, user.salt);
-
-        // 6. 安全比较哈希值（防时序攻击）
-        if (!this.secureCompare(inputHash, user.password)) {
-            return this.errorResponse(401, '邮箱或密码错误2');
-        }
-
+        const { success } = await env.DB.prepare(
+        'UPDATE PLAYER SET deviceid = ? WHERE email = ?'
+        ).bind(deviceid, email).run();
         // 7. 登录成功响应
         return new Response(JSON.stringify({
             success: true,
@@ -152,19 +129,6 @@ export default {
     }
 },
 
-// 安全字符串比较（防时序攻击）
-secureCompare(a: string, b: string): boolean {
-    const aBuf = new TextEncoder().encode(a);
-    const bBuf = new TextEncoder().encode(b);
-    if (aBuf.length !== bBuf.length) return false;
-
-    let result = 0;
-    for (let i = 0; i < aBuf.length; i++) {
-        result |= aBuf[i] ^ bBuf[i];
-    }
-    return result === 0;
-},
-
 // 错误响应辅助函数
 errorResponse(status: number, message: string): Response {
     return new Response(JSON.stringify({ 
@@ -176,3 +140,12 @@ errorResponse(status: number, message: string): Response {
     });
 }
 };
+
+function xorStrings(str1: string, str2: string) {
+  let result = '';
+  for (let i = 0; i < str1.length; i++) {
+    const charCode = str1.charCodeAt(i) ^ str2.charCodeAt(i % str2.length);
+    result += String.fromCharCode(charCode);
+  }
+  return result;
+}
