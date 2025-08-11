@@ -126,7 +126,7 @@ export default {
 
         // 4. 用户不存在或密码错误（统一返回相同错误信息防止枚举攻击）
         if (!user) {
-            return this.errorResponse(401, '邮箱或密码错误');
+            return this.errorResponse(401, '邮箱或密码错误1');
         }
 
         // 5. 使用存储的盐值哈希输入密码
@@ -134,7 +134,7 @@ export default {
 
         // 6. 安全比较哈希值（防时序攻击）
         if (!this.secureCompare(inputHash, user.password)) {
-            return this.errorResponse(401, '邮箱或密码错误');
+            return this.errorResponse(401, '邮箱或密码错误2');
         }
 
         // 7. 登录成功响应
