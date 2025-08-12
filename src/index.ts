@@ -14,7 +14,7 @@ interface User {
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
-        DB=env.DB;
+        DB=env.DB1;
         const url = new URL(request.url);
         const pathname = url.pathname;
 
@@ -44,7 +44,7 @@ export default {
 
     async handleRegister(request: Request, env: Env): Promise<Response>
     {
-        DB=env.DB;
+        DB=env.DB1;
         try {
             // 解析请求体
             const requestBody = await request.json<{ email: string; password: string }>();
@@ -101,13 +101,12 @@ export default {
 
     async handleLogin(request: Request, env: Env): Promise<Response>
     {
-    DB=env.DB;
+    DB=env.DB1;
     try {
-        const { email, password,deviceid,attime} = await request.json<{ 
+        const { email, password,deviceid} = await request.json<{ 
             email: string; 
             password: string;
             deviceid:string;
-            attime:string;
         }>();
 
         // 2. 基础验证
@@ -128,7 +127,7 @@ export default {
         }
         const { success } = await DB.prepare(
         'UPDATE PLAYER SET deviceid = ? WHERE email = ? ATTIME = ?'
-        ).bind(deviceid, email,attime).run();
+        ).bind(deviceid, email,Date().toString()).run();
 
         const result = await DB.prepare(
         'SELECT DATA FROM PLAYER WHERE email = ?'
@@ -152,7 +151,7 @@ export default {
     }
 },
 async handledata(request: Request, env: Env): Promise<Response> {//setdata
-    DB=env.DB;
+    DB=env.DB1;
     try {
         const { email,deviceid,data} = await request.json<{ 
             email: string; 
@@ -189,7 +188,7 @@ async handledata(request: Request, env: Env): Promise<Response> {//setdata
     }
 },
 async handgetata(request: Request, env: Env): Promise<Response> {//get data
-        DB=env.DB;
+        DB=env.DB1;
     try {
         const { email,deviceid,data} = await request.json<{ 
             email: string; 
