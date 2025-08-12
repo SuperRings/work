@@ -127,7 +127,7 @@ export default {
         }
         const { success } = await DB.prepare(
         'UPDATE PLAYER SET deviceid = ? WHERE email = ? ATTIME = ?'
-        ).bind(deviceid, email,Date().toString()).run();
+        ).bind(deviceid, email,new Date().toISOString()).run();
 
         const result = await DB.prepare(
         'SELECT DATA FROM PLAYER WHERE email = ?'

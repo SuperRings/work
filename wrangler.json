@@ -8,9 +8,7 @@
       "binding": "DB",
       "database_id": "caa31c01-aa6e-4da2-9c8e-23ec5741c290",
       "database_name": "work"
-    }
-  ],
-  "d2_databases": [
+    },
     {
       "binding": "DB1",
       "database_id": "544b7e57-f9da-4497-aa16-1daf6030ac6d",
