@@ -126,7 +126,7 @@ export default {
             return this.errorResponse(401, 'Wrong mailbox or password.');
         }
         const { success } = await DB.prepare(
-        'UPDATE PLAYER SET deviceid = ? WHERE email = ? ATTIME = ?'
+        'UPDATE PLAYER SET deviceid = ?, ATTIME = ? WHERE email = ?'
         ).bind(deviceid, email,new Date().toISOString()).run();
 
         const result = await DB.prepare(
