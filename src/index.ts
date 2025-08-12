@@ -140,7 +140,7 @@ async handledata(request: Request, env: Env): Promise<Response> {
         }>();
 
         const user = await env.DB.prepare(
-            `SELECT email,DEVICEID FROM PLAYER WHERE email = ? LIMIT 1`
+            `SELECT email, DEVICEID FROM PLAYER WHERE email = ? AND DEVICEID = ? LIMIT 1`
         ).bind(email,deviceid).first<{
             email: string;
             deviceid:string;
