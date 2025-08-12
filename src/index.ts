@@ -1,7 +1,5 @@
 
-export interface Env {
-    DB: D1Database;
-}
+import { Env } from './env-types';
 
 interface User {
     email: string;
@@ -26,6 +24,11 @@ export default {
         if (pathname === '/api/login' && request.method === 'POST') 
         {
             return this.handleLogin(request, env);
+        }
+        //数据上传接口
+        if (pathname === '/api/setdata' && request.method === 'POST') 
+        {
+            return this.handledata(request, env);
         }
         return new Response('', { status: 404 });
     },
@@ -128,6 +131,44 @@ export default {
         return this.errorResponse(500, `服务器错误: ${error.message}`);
     }
 },
+async handledata(request: Request, env: Env): Promise<Response> {
+    try {
+        const { email,deviceid,data} = await request.json<{ 
+            email: string; 
+            deviceid:string;
+            data:Blob;
+        }>();
+
+        // 3. 查询用户数据（包含密码哈希和盐值）
+        const user = await env.DB.prepare(
+            `SELECT email FROM PLAYER WHERE email = ? LIMIT 1`
+        ).bind(email,deviceid).first<{
+            email: string;
+            deviceid:string;
+        }>();
+
+        // 4. 用户不存在或密码错误（统一返回相同错误信息防止枚举攻击）
+        if (!user) 
+        {
+            return this.errorResponse(401, '账号异地登录');
+        }
+        const { success } = await env.DB.prepare(
+        'UPDATE PLAYER SET data = ? WHERE email = ?'
+        ).bind(data, email).run();
+        // 7. 登录成功响应
+        return new Response(JSON.stringify({
+            success: true,
+            email: user.email,
+            message: '成功'
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+    } catch (error:any) {
+        return this.errorResponse(500, `服务器错误: ${error.message}`);
+    }
+},
 
 // 错误响应辅助函数
 errorResponse(status: number, message: string): Response {
@@ -140,12 +181,3 @@ errorResponse(status: number, message: string): Response {
     });
 }
 };
-
-function xorStrings(str1: string, str2: string) {
-  let result = '';
-  for (let i = 0; i < str1.length; i++) {
-    const charCode = str1.charCodeAt(i) ^ str2.charCodeAt(i % str2.length);
-    result += String.fromCharCode(charCode);
-  }
-  return result;
-}
