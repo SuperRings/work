@@ -139,9 +139,8 @@ async handledata(request: Request, env: Env): Promise<Response> {
             data:Blob;
         }>();
 
-        // 3. 查询用户数据（包含密码哈希和盐值）
         const user = await env.DB.prepare(
-            `SELECT email FROM PLAYER WHERE email = ? LIMIT 1`
+            `SELECT email,DEVICEID FROM PLAYER WHERE email = ? LIMIT 1`
         ).bind(email,deviceid).first<{
             email: string;
             deviceid:string;
