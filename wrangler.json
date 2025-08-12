@@ -5,7 +5,7 @@
   "upload_source_maps": true,
   "d1_databases": [
     {
-      "binding": "DB1",
+      "binding": "DB",
       "database_id": "caa31c01-aa6e-4da2-9c8e-23ec5741c290",
       "database_name": "work"
     }
