@@ -14,7 +14,7 @@ interface User {
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
-        DB=env.DB1;
+        DB=env.DB;
         const url = new URL(request.url);
         const pathname = url.pathname;
 
@@ -44,7 +44,7 @@ export default {
 
     async handleRegister(request: Request, env: Env): Promise<Response>
     {
-        DB=env.DB1;
+        DB=env.DB;
         try {
             // 解析请求体
             const requestBody = await request.json<{ email: string; password: string }>();
@@ -101,7 +101,7 @@ export default {
 
     async handleLogin(request: Request, env: Env): Promise<Response>
     {
-    DB=env.DB1;
+    DB=env.DB;
     try {
         const { email, password,deviceid,attime} = await request.json<{ 
             email: string; 
@@ -152,7 +152,7 @@ export default {
     }
 },
 async handledata(request: Request, env: Env): Promise<Response> {//setdata
-    DB=env.DB1;
+    DB=env.DB;
     try {
         const { email,deviceid,data} = await request.json<{ 
             email: string; 
@@ -189,7 +189,7 @@ async handledata(request: Request, env: Env): Promise<Response> {//setdata
     }
 },
 async handgetata(request: Request, env: Env): Promise<Response> {//get data
-        DB=env.DB1;
+        DB=env.DB;
     try {
         const { email,deviceid,data} = await request.json<{ 
             email: string; 
