@@ -132,7 +132,7 @@ export default {
         const result = await DB.prepare(
         'SELECT DATA FROM PLAYER WHERE email = ?'
         ).bind(email).first();
-        if (!result || !result.data)
+        if (!result)
         {
             return new Response('Data not found', { status: 404 });
         }
