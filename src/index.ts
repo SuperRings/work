@@ -106,7 +106,7 @@ export default {
         const { email, password,deviceid} = await request.json<{ 
             email: string; 
             password: string;
-            deviceid:string;
+            deviceid: string;
         }>();
 
         // 2. 基础验证
@@ -126,8 +126,8 @@ export default {
             return this.errorResponse(401, 'Wrong mailbox or password.');
         }
         const { success } = await DB.prepare(
-        'UPDATE PLAYER SET deviceid = ?, ATTIME = ? WHERE email = ?'
-        ).bind(deviceid, email,new Date().toISOString()).run();
+        'UPDATE PLAYER SET DEVICEID = ? , ATTIME = ? WHERE email = ?'
+        ).bind(deviceid, new Date().toISOString(), email).run();
 
         const result = await DB.prepare(
         'SELECT DATA FROM PLAYER WHERE email = ?'
@@ -140,7 +140,7 @@ export default {
             success: true,
             email: user.email,
             message: 'Login!',
-            mdata:result.data
+            mdata:result
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
