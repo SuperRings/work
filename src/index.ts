@@ -29,12 +29,16 @@ export default {
             return this.handleLogin(request, env);
         }
         //数据上传接口
-        if (pathname === '/api/seadata' && request.method === 'POST') //set
+        if (pathname === '/api/seadata' && request.method === 'POST') //setdata
         {
             return this.handledata(request, env);
         }
         //数据下载接口
-        if (pathname === '/api/gesdata' && request.method === 'POST') //get
+        if (pathname === '/api/gesdata' && request.method === 'POST') //getdata
+        {
+            return this.handgetata(request, env);
+        }
+        if (pathname === '/api/gattime' && request.method === 'POST') //time
         {
             return this.handgetata(request, env);
         }
@@ -140,6 +144,7 @@ export default {
             success: true,
             email: user.email,
             message: 'Login!',
+            time: new Date().toISOString(),
             mdata:result
         }), {
             status: 200,
@@ -177,7 +182,8 @@ async handledata(request: Request, env: Env): Promise<Response> {//setdata
         return new Response(JSON.stringify({
             success: true,
             email: user.email,
-            message: '成功'
+            message: '成功',
+            time: new Date().toISOString()
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
@@ -215,6 +221,23 @@ async handgetata(request: Request, env: Env): Promise<Response> {//get data
             success: true,
             email: user.email,
             message: '成功'
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+    } catch (error:any) {
+        return this.errorResponse(500, `Server error: ${error.message}`);
+    }
+},
+async handgettime(request: Request, env: Env): Promise<Response> {//get data
+        DB=env.DB;
+    try {
+
+        return new Response(JSON.stringify({
+            success: true,
+            message: '成功',
+            time: new Date().toISOString()
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
