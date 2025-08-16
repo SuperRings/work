@@ -5,10 +5,10 @@ CREATE TABLE IF NOT EXISTS comments (
     content TEXT NOT NULL
 );
 
--- Insert some sample data into our comments table.
-INSERT INTO comments (author, content)
-VALUES
-    ('Kristian', 'Congrats!'),
-    ('Serena', 'Great job!'),
-    ('Max', 'Keep up the good work!')
-;
+-- -- Insert some sample data into our comments table.
+-- INSERT INTO comments (author, content)
+-- VALUES
+--     ('Kristian', 'Congrats!'),
+--     ('Serena', 'Great job!'),
+--     ('Max', 'Keep up the good work!')
+-- ;
