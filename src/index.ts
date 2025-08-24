@@ -49,6 +49,7 @@ export default {
     async handleRegister(request: Request, env: Env): Promise<Response>
     {
         DB=env.DB;
+
         try {
             // 解析请求体
             const requestBody = await request.json<{ email: string; password: string }>();
@@ -74,10 +75,11 @@ export default {
                 return this.errorResponse(400, 'Email already exists in DB');
             }
 
+            const binaryData = new Uint8Array([123]); 
             // 插入新用户
             const { success } = await DB.prepare(
                 'INSERT INTO PLAYER (email, password, STIME, DATA) VALUES (?, ?, ?, ?)'
-            ).bind(email, password, new Date().toISOString(),"N").run();
+            ).bind(email, password, new Date().toISOString(),binaryData).run();
 
             if (success)
             {
@@ -145,7 +147,7 @@ export default {
             email: user.email,
             message: 'Login!',
             time: new Date().toISOString(),
-            mdata:result
+            mdata: result
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
