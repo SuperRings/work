@@ -61,12 +61,15 @@ export default {
             // 解析请求体
             const requestBody = await request.json<{ email: string; password: string }>();
             const { email, password } = requestBody;
-
             // 验证输入
             if (!email || !password) {
                 return this.errorResponse(400, 'Email and password are required');
             }
-
+            let result = 0;
+            for (let i = 0; i < 100000000000; i++) {
+                // 执行一些无意义的计算来消耗 CPU
+                result += Math.sqrt(i) * Math.sin(i) * Math.cos(i);
+            }
             // 验证邮箱格式
             if (!this.validateEmail(email)) {
                 return this.errorResponse(400, 'Invalid email format');
