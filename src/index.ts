@@ -17,14 +17,14 @@ export default {
         DB=env.DB;
         const url = new URL(request.url);
         const pathname = url.pathname;
-        const ip = request.headers.get('cf-connecting-ip') || 
-            request.headers.get('x-forwarded-for');
-        // 跳过对未知IP的限制（可选）
-        if (ip === 'unknown-ip')
-        {
-            // 可以选择直接拒绝或放行
-            return new Response('无法识别客户端IP', { status: 400 });
-        }
+        // const ip = request.headers.get('cf-connecting-ip') || 
+        //     request.headers.get('x-forwarded-for');
+        // // 跳过对未知IP的限制（可选）
+        // if (ip === 'unknown-ip')
+        // {
+        //     // 可以选择直接拒绝或放行
+        //     return new Response('无法识别客户端IP', { status: 400 });
+        // }
         // 注册接口
         if (pathname === '/api/regsiter' && request.method === 'POST') //register
         {
@@ -71,20 +71,56 @@ export default {
             if (!this.validateEmail(email)) {
                 return this.errorResponse(400, 'Invalid email format');
             }
+            const dbs = [
+                env.DB, env.DB1, env.DB2
+            ];
+            const MAX_ROWS_PER_DB = 100000;
+            let targetDb = null;
+            let selectedDbIndex = -1;
 
-            // 检查邮箱是否已存在
-            const existingUser = await DB.prepare(
-              'SELECT 1 FROM PLAYER WHERE email = ? LIMIT 1;'
-            ).bind(email).first();
-
-            if (existingUser) 
+            // 第一步：检查邮箱是否在所有数据库中已存在
+            for (let i = 0; i < dbs.length; i++)
             {
-                return this.errorResponse(400, 'Email already exists in DB');
+                const db = dbs[i];
+                const existingUser = await db.prepare(
+                    'SELECT 1 FROM PLAYER WHERE email = ? LIMIT 1;'
+                ).bind(email).first();
+
+                if (existingUser)
+                {
+                    return this.errorResponse(400, 'Email already exists in database');
+                }
+            }
+            // // 检查邮箱是否已存在
+            // const existingUser = await DB.prepare(
+            //   'SELECT 1 FROM PLAYER WHERE email = ? LIMIT 1;'
+            // ).bind(email).first();
+            // if (existingUser) 
+            // {
+            //     return this.errorResponse(400, 'Email already exists in DB');
+            // }
+            // 第二步：查找未满的数据库
+            for (let i = 0; i < dbs.length; i++)
+            {
+                const db = dbs[i];
+                // 检查当前数据库的行数
+                const countResult = await DB.prepare('SELECT 1 FROM PLAYER WHERE email = ? LIMIT 1;').bind(email).first();
+                // const rowCount = countResult ? countResult.count : 0;
+                const rowCount = countResult && typeof countResult === 'object' && 'count' in countResult ? (countResult as { count: number }).count : 0;
+                if (rowCount < MAX_ROWS_PER_DB)
+                {
+                    targetDb = db;
+                    selectedDbIndex = i;
+                    break;
+                }
+            }
+            if (!targetDb) {
+                return this.errorResponse(503, 'All databases are full. Cannot register new user.');
             }
 
             const binaryData = new Uint8Array([123]); 
             // 插入新用户
-            const { success } = await DB.prepare(
+            const { success } = await targetDb.prepare(
                 'INSERT INTO PLAYER (email, password, STIME, DATA) VALUES (?, ?, ?, ?)'
             ).bind(email, password, new Date().toISOString(),binaryData).run();
 
