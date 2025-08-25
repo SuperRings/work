@@ -21,6 +21,12 @@
       "database_name": "work2"
     }
   ],
+  "kv_namespaces": [
+  { 
+    "binding" : "TEST",
+    "id" : "17783d15753549788e8244773bf345d7"
+   }
+  ],
   "observability": {
     "enabled": true
   }

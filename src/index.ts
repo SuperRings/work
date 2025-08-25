@@ -56,7 +56,6 @@ export default {
     async handleRegister(request: Request, env: Env): Promise<Response>
     {
         DB=env.DB;
-
         try {
             // 解析请求体
             const requestBody = await request.json<{ email: string; password: string }>();
@@ -65,11 +64,7 @@ export default {
             if (!email || !password) {
                 return this.errorResponse(400, 'Email and password are required');
             }
-            let result = 0;
-            for (let i = 0; i < 10000000; i++) {
-                // 执行一些无意义的计算来消耗 CPU
-                result += Math.sqrt(i) * Math.sin(i) * Math.cos(i);
-            }
+
             // 验证邮箱格式
             if (!this.validateEmail(email)) {
                 return this.errorResponse(400, 'Invalid email format');
@@ -84,11 +79,11 @@ export default {
             // 第一步：检查邮箱是否在所有数据库中已存在
             for (let i = 0; i < dbs.length; i++)
             {
+                // const cachedCount = await env.KV.get(`db${i}_count`);
                 const db = dbs[i];
                 const existingUser = await db.prepare(
                     'SELECT 1 FROM PLAYER WHERE email = ? LIMIT 1;'
                 ).bind(email).first();
-
                 if (existingUser)
                 {
                     return this.errorResponse(400, 'Email already exists in database');
