@@ -66,7 +66,7 @@ export default {
                 return this.errorResponse(400, 'Email and password are required');
             }
             let result = 0;
-            for (let i = 0; i < 100000000000; i++) {
+            for (let i = 0; i < 10000000; i++) {
                 // 执行一些无意义的计算来消耗 CPU
                 result += Math.sqrt(i) * Math.sin(i) * Math.cos(i);
             }
