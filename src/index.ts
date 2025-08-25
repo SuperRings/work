@@ -1,6 +1,6 @@
 
 import { Env } from './env-types';
-let DB: D1Database;
+// let DB: D1Database;
 
 interface User {
     email: string;
@@ -14,7 +14,7 @@ interface User {
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
-        DB=env.DB;
+        // DB=env.DB;
         const url = new URL(request.url);
         const pathname = url.pathname;
         // const ip = request.headers.get('cf-connecting-ip') || 
@@ -41,21 +41,21 @@ export default {
             return this.handledata(request, env);
         }
         //数据下载接口
-        if (pathname === '/api/gesdata' && request.method === 'POST') //getdata
-        {
-            return this.handgetata(request, env);
-        }
-        if (pathname === '/api/gattime' && request.method === 'POST') //time
-        {
-            return this.handgetata(request, env);
-        }
+        // if (pathname === '/api/gesdata' && request.method === 'POST') //getdata
+        // {
+        //     return this.handgetata(request, env);
+        // }
+        // if (pathname === '/api/gattime' && request.method === 'POST') //time
+        // {
+        //     return this.handgetata(request, env);
+        // }
 
         return new Response('', { status: 404 });
     },
 
     async handleRegister(request: Request, env: Env): Promise<Response>
     {
-        DB=env.DB;
+        // DB=env.DB;
         try {
             // 解析请求体
             const requestBody = await request.json<{ email: string; password: string }>();
@@ -102,9 +102,8 @@ export default {
             {
                 const db = dbs[i];
                 // 检查当前数据库的行数
-                const countResult = await DB.prepare('SELECT 1 FROM PLAYER WHERE email = ? LIMIT 1;').bind(email).first();
-                // const rowCount = countResult ? countResult.count : 0;
-                const rowCount = countResult && typeof countResult === 'object' && 'count' in countResult ? (countResult as { count: number }).count : 0;
+                const countResult = await db.prepare('SELECT COUNT(*) as count FROM PLAYER').first() as { count: number } | null;
+                const rowCount = countResult ? countResult.count : 0;
                 if (rowCount < MAX_ROWS_PER_DB)
                 {
                     targetDb = db;
@@ -148,7 +147,7 @@ export default {
 
     async handleLogin(request: Request, env: Env): Promise<Response>
     {
-    DB=env.DB;
+    // DB=env.DB;
     try {
         const { email, password,deviceid} = await request.json<{ 
             email: string; 
@@ -161,22 +160,64 @@ export default {
             return this.errorResponse(400, 'The mailbox and password are empty.');
         }
 
-        const user = await DB.prepare(
-            `SELECT email, password FROM PLAYER WHERE email = ? LIMIT 1`
-        ).bind(email).first<{
-            email: string;
-            password: string;
-        }>();
+        const dbs = [
+            env.DB, env.DB1, env.DB2
+        ];
 
-        if (!user)
+      // 并行在所有数据库中查询该邮箱
+        const queryPromises = dbs.map(db => 
+            db.prepare('SELECT email, password FROM PLAYER WHERE email = ? LIMIT 1')
+              .bind(email)
+              .first<{ email: string; password: string }>()
+        );
+        const results = await Promise.all(queryPromises);
+        // 查找存在的用户
+        let targetDb = null;
+        let user = null;
+        let dbIndex = -1;
+
+        for (let i = 0; i < results.length; i++) {
+            if (results[i] !== null) {
+                user = results[i];
+                targetDb = dbs[i];
+                dbIndex = i;
+                break;
+            }
+        }
+
+        // 如果所有数据库都没有找到该邮箱
+        if (!user) {
+            return this.errorResponse(401, 'Wrong mailbox or password.');
+        }
+        if(!targetDb)
         {
             return this.errorResponse(401, 'Wrong mailbox or password.');
         }
-        const { success } = await DB.prepare(
+
+        // 验证密码（这里假设密码是明文，实际应该用哈希比较）
+        if (user.password !== password) {
+            return this.errorResponse(401, 'Wrong mailbox or password.');
+        }
+        // const user = await DB.prepare(
+        //     `SELECT email, password FROM PLAYER WHERE email = ? LIMIT 1`
+        // ).bind(email).first<{
+        //     email: string;
+        //     password: string;
+        // }>();
+        //  for (let i = 0; i < results.length; i++) {
+        //     if (results[i] !== null) {
+        //         user = results[i];
+        //         targetDb = dbs[i];
+        //         dbIndex = i;
+        //         break;
+        //     }
+        // }
+
+        const { success } = await targetDb.prepare(
         'UPDATE PLAYER SET DEVICEID = ? , ATTIME = ? WHERE email = ?'
         ).bind(deviceid, new Date().toISOString(), email).run();
 
-        const result = await DB.prepare(
+        const result = await targetDb.prepare(
         'SELECT DATA FROM PLAYER WHERE email = ?'
         ).bind(email).first();
         if (!result)
@@ -199,7 +240,7 @@ export default {
     }
 },
 async handledata(request: Request, env: Env): Promise<Response> {//setdata
-    DB=env.DB;
+    // DB=env.DB;
     try {
         const { email,deviceid,data} = await request.json<{ 
             email: string; 
@@ -207,7 +248,41 @@ async handledata(request: Request, env: Env): Promise<Response> {//setdata
             data:Blob;
         }>();
 
-        const user = await DB.prepare(
+
+        const dbs = [
+            env.DB, env.DB1, env.DB2
+        ];
+
+      // 并行在所有数据库中查询该邮箱
+        const queryPromises = dbs.map(db => 
+            db.prepare('SELECT email, password FROM PLAYER WHERE email = ? LIMIT 1')
+              .bind(email)
+              .first<{ email: string; password: string }>()
+        );
+        const results = await Promise.all(queryPromises);
+        // 查找存在的用户
+        let targetDb = null;
+        let user = null;
+        let dbIndex = -1;
+
+        for (let i = 0; i < results.length; i++) {
+            if (results[i] !== null) {
+                user = results[i];
+                targetDb = dbs[i];
+                dbIndex = i;
+                break;
+            }
+        }
+
+        if (!user) {
+            return this.errorResponse(401, 'Wrong mailbox or password.');
+        }
+        if(!targetDb)
+        {
+            return this.errorResponse(401, 'Wrong mailbox or password.');
+        }
+
+        user = await targetDb.prepare(
             `SELECT email, DEVICEID FROM PLAYER WHERE email = ? AND DEVICEID = ? LIMIT 1`
         ).bind(email,deviceid).first<{
             email: string;
@@ -218,7 +293,7 @@ async handledata(request: Request, env: Env): Promise<Response> {//setdata
         {
             return this.errorResponse(401, 'Account offline!');
         }
-        const { success } = await DB.prepare(
+        const { success } = await targetDb.prepare(
         'UPDATE PLAYER SET DATA = ? WHERE email = ?'
         ).bind(data, email).run();
         // 7. 登录成功响应
@@ -236,45 +311,45 @@ async handledata(request: Request, env: Env): Promise<Response> {//setdata
         return this.errorResponse(500, `Server error: ${error.message}`);
     }
 },
-async handgetata(request: Request, env: Env): Promise<Response> {//get data
-        DB=env.DB;
-    try {
-        const { email,deviceid,data} = await request.json<{ 
-            email: string; 
-            deviceid:string;
-            data:Blob;
-        }>();
+// async handgetata(request: Request, env: Env): Promise<Response> {//get data
+//         // DB=env.DB;
+//     try {
+//         const { email,deviceid,data} = await request.json<{ 
+//             email: string; 
+//             deviceid:string;
+//             data:Blob;
+//         }>();
 
-        const user = await DB.prepare(
-            `SELECT email, DEVICEID FROM PLAYER WHERE email = ? AND DEVICEID = ? LIMIT 1`
-        ).bind(email,deviceid).first<{
-            email: string;
-            deviceid:string;
-        }>();
+//         const user = await DB.prepare(
+//             `SELECT email, DEVICEID FROM PLAYER WHERE email = ? AND DEVICEID = ? LIMIT 1`
+//         ).bind(email,deviceid).first<{
+//             email: string;
+//             deviceid:string;
+//         }>();
 
-        if (!user)
-        {
-            return this.errorResponse(401, 'Account offline!');
-        }
-        const { success } = await DB.prepare(
-        'UPDATE PLAYER SET DATA = ? WHERE email = ?'
-        ).bind(data, email).run();
+//         if (!user)
+//         {
+//             return this.errorResponse(401, 'Account offline!');
+//         }
+//         const { success } = await DB.prepare(
+//         'UPDATE PLAYER SET DATA = ? WHERE email = ?'
+//         ).bind(data, email).run();
 
-        return new Response(JSON.stringify({
-            success: true,
-            email: user.email,
-            message: '成功'
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
+//         return new Response(JSON.stringify({
+//             success: true,
+//             email: user.email,
+//             message: '成功'
+//         }), {
+//             status: 200,
+//             headers: { 'Content-Type': 'application/json' }
+//         });
 
-    } catch (error:any) {
-        return this.errorResponse(500, `Server error: ${error.message}`);
-    }
-},
+//     } catch (error:any) {
+//         return this.errorResponse(500, `Server error: ${error.message}`);
+//     }
+// },
 async handgettime(request: Request, env: Env): Promise<Response> {//get data
-        DB=env.DB;
+        // DB=env.DB;
     try {
 
         return new Response(JSON.stringify({
