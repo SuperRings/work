@@ -18,10 +18,9 @@ export default {
         const url = new URL(request.url);
         const pathname = url.pathname;
         const ip = request.headers.get('cf-connecting-ip') || 
-            request.headers.get('x-forwarded-for') || 
-            'unknown-ip';
+            request.headers.get('x-forwarded-for');
         // 跳过对未知IP的限制（可选）
-        if (ip === 'unknown-ip') 
+        if (ip === 'unknown-ip')
         {
             // 可以选择直接拒绝或放行
             return new Response('无法识别客户端IP', { status: 400 });

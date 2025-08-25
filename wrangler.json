@@ -14,6 +14,11 @@
       "binding": "DB1",
       "database_id": "544b7e57-f9da-4497-aa16-1daf6030ac6d",
       "database_name": "work1"
+    },
+    {
+      "binding": "DB2",
+      "database_id": "15594419-634d-413a-9de9-45d69a278c1f",
+      "database_name": "work2"
     }
   ],
   "observability": {
