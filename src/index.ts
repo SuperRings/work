@@ -168,7 +168,7 @@ export default {
         const queryPromises = dbs.map(db => 
             db.prepare('SELECT email, password, KEY FROM PLAYER WHERE email = ? LIMIT 1')
               .bind(email)
-              .first<{ email: string; password: string; key:string }>()
+              .first<{ email: string; password: string; KEY:string }>()
         );
         const results = await Promise.all(queryPromises);
         // 查找存在的用户
@@ -198,7 +198,7 @@ export default {
         if (user.password !== password) {
             return this.errorResponse(401, 'Wrong mailbox or password.');
         }
-        RADNKEY=user.key;
+        RADNKEY=user.KEY;
         // const user = await DB.prepare(
         //     `SELECT email, password FROM PLAYER WHERE email = ? LIMIT 1`
         // ).bind(email).first<{
