@@ -64,7 +64,6 @@ export default {
             if (!email || !password) {
                 return this.errorResponse(400, 'Email and password are required');
             }
-
             // 验证邮箱格式
             if (!this.validateEmail(email)) {
                 return this.errorResponse(400, 'Invalid email format');
@@ -116,10 +115,11 @@ export default {
             }
 
             const binaryData = new Uint8Array([123]); 
+            const randomStr = crypto.randomUUID();
             // 插入新用户
             const { success } = await targetDb.prepare(
-                'INSERT INTO PLAYER (email, password, STIME, DATA) VALUES (?, ?, ?, ?)'
-            ).bind(email, password, new Date().toISOString(),binaryData).run();
+                'INSERT INTO PLAYER (email, password, STIME, DATA, KEY) VALUES (?, ?, ?, ?, ?)'
+            ).bind(email, password, new Date().toISOString(),binaryData,randomStr).run();
 
             if (success)
             {
@@ -166,9 +166,9 @@ export default {
 
       // 并行在所有数据库中查询该邮箱
         const queryPromises = dbs.map(db => 
-            db.prepare('SELECT email, password FROM PLAYER WHERE email = ? LIMIT 1')
+            db.prepare('SELECT email, password, key FROM PLAYER WHERE email = ? LIMIT 1')
               .bind(email)
-              .first<{ email: string; password: string }>()
+              .first<{ email: string; password: string; key:string }>()
         );
         const results = await Promise.all(queryPromises);
         // 查找存在的用户
@@ -230,6 +230,7 @@ export default {
             message: 'Login!',
             time: new Date().toISOString(),
             mdata: result,
+            key: user.key,
             key0:"runring@runring.eu.org",
             key1: "SNdmQsJLrIttT35N",
             key2:"smtp.qiye.aliyun.com",
