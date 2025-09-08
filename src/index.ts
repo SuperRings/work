@@ -166,7 +166,7 @@ export default {
 
       // 并行在所有数据库中查询该邮箱
         const queryPromises = dbs.map(db => 
-            db.prepare('SELECT email, password, key FROM PLAYER WHERE email = ? LIMIT 1')
+            db.prepare('SELECT email, password, KEY FROM PLAYER WHERE email = ? LIMIT 1')
               .bind(email)
               .first<{ email: string; password: string; key:string }>()
         );
