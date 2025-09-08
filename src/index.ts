@@ -175,7 +175,7 @@ export default {
         let targetDb = null;
         let user = null;
         let dbIndex = -1;
-
+        let RADNKEY=null;
         for (let i = 0; i < results.length; i++) {
             if (results[i] !== null) {
                 user = results[i];
@@ -198,6 +198,7 @@ export default {
         if (user.password !== password) {
             return this.errorResponse(401, 'Wrong mailbox or password.');
         }
+        RADNKEY=user.key;
         // const user = await DB.prepare(
         //     `SELECT email, password FROM PLAYER WHERE email = ? LIMIT 1`
         // ).bind(email).first<{
@@ -230,7 +231,7 @@ export default {
             message: 'Login!',
             time: new Date().toISOString(),
             mdata: result,
-            key: user.key,
+            key: RADNKEY,
             key0:"runring@runring.eu.org",
             key1: "SNdmQsJLrIttT35N",
             key2:"smtp.qiye.aliyun.com",
