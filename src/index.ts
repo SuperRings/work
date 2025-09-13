@@ -68,6 +68,15 @@ export default {
             if (!this.validateEmail(email)) {
                 return this.errorResponse(400, 'Invalid email format');
             }
+            const domain = email.split('@')[1].toLowerCase();
+            const allowedDomains = ['gmail.com', '163.com', 'qq.com','runring.eu.org','outlook.com','icloud.com'];
+            if (!allowedDomains.includes(domain)) {
+                // 域名不在允许列表中
+                return new Response(JSON.stringify({ error: 'Email domain not allowed.' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+                });
+            }
             const dbs = [
                 env.DB, env.DB1, env.DB2
             ];
