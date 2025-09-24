@@ -229,7 +229,7 @@ export default {
         //     }
         // }
       // 4. 准备调用PlayFab的API
-      const playFabUrl = `https://1C3615.playfabapi.com/Admin/SendEmail`;
+      const playFabUrl = `https://1C3615.playfabapi.com/Server/SendEmail`;
         const requestBody = {
         EmailAddress: "2487683083@qq.com",  // 收件人邮箱
         Subject: "🎮 欢迎来到我的游戏！",      // 邮件主题
