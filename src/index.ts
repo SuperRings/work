@@ -1,6 +1,6 @@
 
 import { Env } from './env-types';
-import { WorkerMailer } from './worker-mailer'
+import { WorkerMailer } from './worker-mailer/dist/index'
 // let DB: D1Database;
 
 // 连接到 SMTP 服务器
