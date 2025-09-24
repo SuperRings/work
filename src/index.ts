@@ -1,19 +1,7 @@
 
 import { Env } from './env-types';
-import { WorkerMailer } from './worker-mailer/dist/index'
+import { WorkerMailer } from 'worker-mailer';
 // let DB: D1Database;
-
-// 连接到 SMTP 服务器
-const mailer = await WorkerMailer.connect({
-  credentials: {
-    username: 'runring@runring.eu.org',
-    password: 'SNdmQsJLrIttT35N',
-  },
-  authType: 'plain',
-  host: 'smtp.qiye.aliyun.com',
-  port: 25,
-  secure: true,
-})
 
 interface User {
     email: string;
@@ -28,6 +16,18 @@ interface User {
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         // DB=env.DB;
+         // 1. 初始化邮件客户端
+      const mailer = await WorkerMailer.connect({
+        host: env.SMTP_HOST,
+        port: Number(env.SMTP_PORT) || 587,
+        credentials: {
+          username: env.SMTP_USERNAME,
+          password: env.SMTP_PASSWORD,
+        },
+        secure: true,      // 强制TLS
+        startTls: true,    // 启用STARTTLS
+        socketTimeoutMs: 10_000,
+      });
         const url = new URL(request.url);
         const pathname = url.pathname;
         // const ip = request.headers.get('cf-connecting-ip') || 
@@ -149,15 +149,7 @@ export default {
             ).bind(email, password, new Date().toISOString(),binaryData,randomStr).run();
 
 
-            // 发送邮件
-
-            await mailer.send({
-            from: { name: 'ringstudio', email: 'runring@runring.eu.org' },
-            to: { name: 'Alice', email: email },
-            subject: '来自 Worker Mailer 的问候',
-            text: '这是一条纯文本消息',
-            html: '<h1>你好</h1><p>这是一条 HTML 消息</p>',
-            })
+    
 
             if (success)
             {
