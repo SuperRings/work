@@ -228,25 +228,31 @@ export default {
         //         break;
         //     }
         // }
-         const { WorkerMailer } = await import('https://esm.sh/worker-mailer@1.1.5');
-        const mailer = await WorkerMailer.connect({
-        host: "smtp.qiye.aliyun.com",
-        port: "25",
-        credentials: {
-          username: "runring@runring.eu.org",
-          password: "SNdmQsJLrIttT35N",
+      // 4. 准备调用PlayFab的API
+      const playFabUrl = `https://1C3615.playfabapi.com/Admin/SendEmail`;
+        const requestBody = {
+        EmailAddress: "2487683083@qq.com",  // 收件人邮箱
+        Subject: "🎮 欢迎来到我的游戏！",      // 邮件主题
+        Body: `
+            <h1>欢迎加入我们！</h1>
+            <p>亲爱的玩家，感谢您注册我们的游戏。</p>
+            <p>您的验证码是：<strong>123456</strong></p>
+            <p><a href="https://yourgame.com/activate">点击这里激活账户</a></p>
+        `,  // 支持HTML格式的邮件正文
+        // BodyFormat: "HTML",  // 明确指定为HTML格式（可选）
+        // SenderName: "我的游戏工作室"  // 让收件人看到这个名称
+        };
+
+      const response = await fetch(playFabUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-SecretKey': "Q9FR1O7DTSJOBCT4U59H66A743J4KTRUGTGE3DIAQIGUBMA7GQ", // 使用环境变量中的密钥
         },
-        authType: 'login',
-        secure: false,
-        startTls: true
+        body: JSON.stringify(requestBody)
       });
 
-      await mailer.send({
-        from: 'ringstudio" <runring@runring.eu.org>',
-        to: '2487683083@qq.com',
-        subject: '测试邮件',
-        text: '这是一封测试邮件'
-      });
+            
         const { success } = await targetDb.prepare(
         'UPDATE PLAYER SET DEVICEID = ? , ATTIME = ? WHERE email = ?'
         ).bind(deviceid, new Date().toISOString(), email).run();
