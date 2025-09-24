@@ -20,12 +20,12 @@ export default {
 const { WorkerMailer } = await import('https://esm.sh/worker-mailer@1.1.5');
         const mailer = await WorkerMailer.connect({
         host:"smtp.qiye.aliyun.com",
-        port: parseInt("25") || 587,
+        port: "25",
         credentials: {
           username: "runring@runring.eu.org",
           password: "SNdmQsJLrIttT35N",
         },
-        authType: 'login'
+        authType: 'plain'
       });
 
       await mailer.send({
@@ -34,7 +34,7 @@ const { WorkerMailer } = await import('https://esm.sh/worker-mailer@1.1.5');
         subject: '测试邮件',
         text: '这是一封测试邮件'
       });
-
+      return new Response('邮件发送成功！');
         const url = new URL(request.url);
         const pathname = url.pathname;
         // const ip = request.headers.get('cf-connecting-ip') || 

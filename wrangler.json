@@ -4,8 +4,6 @@
   "main": "src/index.ts",
   "name": "work",
   "upload_source_maps": true,
-  "external": ["worker-mailer"],
-  "nodejs_compat": true,
   "d1_databases": [
     {
       "binding": "DB",
