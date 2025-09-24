@@ -1,6 +1,6 @@
 
 import { Env } from './env-types';
-import { WorkerMailer } from 'worker-mailer'
+import { WorkerMailer } from './worker-mailer'
 // let DB: D1Database;
 
 // 连接到 SMTP 服务器
@@ -150,7 +150,7 @@ export default {
 
 
             // 发送邮件
-            
+
             await mailer.send({
             from: { name: 'ringstudio', email: 'runring@runring.eu.org' },
             to: { name: 'Alice', email: email },
