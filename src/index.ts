@@ -1,6 +1,6 @@
 
 import { Env } from './env-types';
-import { WorkerMailer } from 'worker-mailer';
+import { WorkerMailer } from "worker-mailer"
 // let DB: D1Database;
 
 interface User {
@@ -17,17 +17,24 @@ export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         // DB=env.DB;
          // 1. 初始化邮件客户端
-      const mailer = await WorkerMailer.connect({
-        host: env.SMTP_HOST,
-        port: Number(env.SMTP_PORT) || 587,
+
+        const mailer = await WorkerMailer.connect({
+        host:"smtp.qiye.aliyun.com",
+        port: parseInt("25") || 587,
         credentials: {
-          username: env.SMTP_USERNAME,
-          password: env.SMTP_PASSWORD,
+          username: "runring@runring.eu.org",
+          password: "SNdmQsJLrIttT35N",
         },
-        secure: true,      // 强制TLS
-        startTls: true,    // 启用STARTTLS
-        socketTimeoutMs: 10_000,
+        authType: 'login'
       });
+
+      await mailer.send({
+        from: "runring@runring.eu.org",
+        to: '2487683083@qq.com',
+        subject: '测试邮件',
+        text: '这是一封测试邮件'
+      });
+
         const url = new URL(request.url);
         const pathname = url.pathname;
         // const ip = request.headers.get('cf-connecting-ip') || 

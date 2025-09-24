@@ -2,15 +2,10 @@
 {
   "compatibility_date": "2025-04-01",
   "main": "src/index.ts",
-  "compatibility_flags": ["nodejs_compat"],
-  "vars": {
-    "SMTP_HOST": "smtp.your-email-provider.com",
-    "SMTP_PORT": "587",
-    "SMTP_USERNAME": "your-email@example.com"
-  },
-  "external": ["worker-mailer"],
   "name": "work",
   "upload_source_maps": true,
+  "external": ["worker-mailer"],
+  "node_compat": true,
   "d1_databases": [
     {
       "binding": "DB",
