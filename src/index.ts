@@ -1,6 +1,19 @@
 
 import { Env } from './env-types';
+import { WorkerMailer } from 'worker-mailer'
 // let DB: D1Database;
+
+// 连接到 SMTP 服务器
+const mailer = await WorkerMailer.connect({
+  credentials: {
+    username: 'runring@runring.eu.org',
+    password: 'SNdmQsJLrIttT35N',
+  },
+  authType: 'plain',
+  host: 'smtp.qiye.aliyun.com',
+  port: 25,
+  secure: true,
+})
 
 interface User {
     email: string;
@@ -37,6 +50,11 @@ export default {
         }
         //数据上传接口
         if (pathname === '/api/seadata' && request.method === 'POST') //setdata
+        {
+            return this.handledata(request, env);
+        }
+        //
+        if (pathname === '/api/sedmail' && request.method === 'POST') //setdata
         {
             return this.handledata(request, env);
         }
@@ -129,6 +147,15 @@ export default {
             const { success } = await targetDb.prepare(
                 'INSERT INTO PLAYER (email, password, STIME, DATA, KEY) VALUES (?, ?, ?, ?, ?)'
             ).bind(email, password, new Date().toISOString(),binaryData,randomStr).run();
+
+            // 发送邮件
+            await mailer.send({
+            from: { name: 'ringstudio', email: 'runring@runring.eu.org' },
+            to: { name: 'Alice', email: email },
+            subject: '来自 Worker Mailer 的问候',
+            text: '这是一条纯文本消息',
+            html: '<h1>你好</h1><p>这是一条 HTML 消息</p>',
+            })
 
             if (success)
             {
@@ -239,9 +266,9 @@ export default {
             time: new Date().toISOString(),
             mdata: result,
             key: user.KEY,
-            key0:"runring@runring.eu.org",
-            key1: "SNdmQsJLrIttT35N",
-            key2:"smtp.qiye.aliyun.com",
+            key0:"0",//runring@runring.eu.org
+            key1: "1",//SNdmQsJLrIttT35N
+            key2:"2",//smtp.qiye.aliyun.com
             key3: 25
         }), {
             status: 200,
