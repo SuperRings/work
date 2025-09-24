@@ -148,7 +148,9 @@ export default {
                 'INSERT INTO PLAYER (email, password, STIME, DATA, KEY) VALUES (?, ?, ?, ?, ?)'
             ).bind(email, password, new Date().toISOString(),binaryData,randomStr).run();
 
+
             // 发送邮件
+            
             await mailer.send({
             from: { name: 'ringstudio', email: 'runring@runring.eu.org' },
             to: { name: 'Alice', email: email },
