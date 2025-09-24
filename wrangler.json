@@ -5,7 +5,7 @@
   "name": "work",
   "upload_source_maps": true,
   "external": ["worker-mailer"],
-  "node_compat": true,
+  "nodejs_compat": true,
   "d1_databases": [
     {
       "binding": "DB",

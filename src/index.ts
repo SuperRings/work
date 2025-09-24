@@ -1,6 +1,6 @@
 
 import { Env } from './env-types';
-import { WorkerMailer } from "worker-mailer"
+
 // let DB: D1Database;
 
 interface User {
@@ -17,7 +17,7 @@ export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         // DB=env.DB;
          // 1. 初始化邮件客户端
-
+const { WorkerMailer } = await import('https://esm.sh/worker-mailer@1.1.5');
         const mailer = await WorkerMailer.connect({
         host:"smtp.qiye.aliyun.com",
         port: parseInt("25") || 587,
