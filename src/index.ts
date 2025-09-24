@@ -1,5 +1,4 @@
 import { Env } from './env-types';
-import nodemailer from 'nodemailer';
 // let DB: D1Database;
 
 interface User {
@@ -229,30 +228,25 @@ export default {
         //         break;
         //     }
         // }
-        const transporter = nodemailer.createTransport({
-        host: "smtp.qiye.aliyun.com",  // PlayFab SMTP 服务器地址
-        port: "25",  // 通常为 587
-        secure: false,         // 如果端口为 587，则使用 STARTTLS
-        auth: {
-            user: "runring@runring.eu.org", // PlayFab SMTP 用户名
-            pass: "SNdmQsJLrIttT35N", // PlayFab SMTP 密码或授权码
+         const { WorkerMailer } = await import('https://esm.sh/worker-mailer@1.1.5');
+        const mailer = await WorkerMailer.connect({
+        host: "smtp.qiye.aliyun.com",
+        port: "25",
+        credentials: {
+          username: "runring@runring.eu.org",
+          password: "SNdmQsJLrIttT35N",
         },
-        });
-        const mailOptions = {
-        from: '"ringstudio" <runring@runring.eu.org>', // 发件人地址和名称
-        to: '2487683083@qq.com', // 收件人地址
-        subject: '测试邮件', // 邮件主题
-        text: '这是一封来自 Nodemailer 的测试邮件！', // 邮件的纯文本内容
-        html: '<b>这是一封来自 Nodemailer 的测试邮件！</b>' // 邮件的 HTML 内容（可选）
-        };
-        transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.log('邮件发送失败:', error);
-        } else {
-            console.log('邮件发送成功: ', info.response);
-        }
-        });
+        authType: 'login',
+        secure: false,
+        startTls: true
+      });
 
+      await mailer.send({
+        from: 'ringstudio" <runring@runring.eu.org>',
+        to: '2487683083@qq.com',
+        subject: '测试邮件',
+        text: '这是一封测试邮件'
+      });
         const { success } = await targetDb.prepare(
         'UPDATE PLAYER SET DEVICEID = ? , ATTIME = ? WHERE email = ?'
         ).bind(deviceid, new Date().toISOString(), email).run();
