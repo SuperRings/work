@@ -1,6 +1,5 @@
 import { Env } from './env-types';
-import { SMTPClient } from '@cloudflare/smtp-client';
-
+import nodemailer from 'nodemailer';
 // let DB: D1Database;
 
 interface User {
@@ -230,26 +229,16 @@ export default {
         //         break;
         //     }
         // }
- // 创建 SMTP 客户端实例
-      const client = new SMTPClient({
-        host: "smtp.qiye.aliyun.com",
-        port: "25",
-        username: "runring@runring.eu.org",
-        password: "SNdmQsJLrIttT35N",
-        // 通常需要 TLS
-        secure: true, // 或根据服务器要求设置为 false，并使用 STARTTLS
-      });
-
-      // 发送邮件
-      await client.send({
-        from: "your-verified-sender@yourdomain.com", // 必须是 PlayFab 验证过的发件人地址
-        to: "2487683083@qq.com",
-        subject: "subject",
-        body: "123",
-      });
-
-      // 关闭连接
-      await client.close();
+        
+        // const transporter = nodemailer.createTransport({
+        // host: env.SMTP_HOST,  // PlayFab SMTP 服务器地址
+        // port: env.SMTP_PORT,  // 通常为 587
+        // secure: false,         // 如果端口为 587，则使用 STARTTLS
+        // auth: {
+        //     user: env.SMTP_USER, // PlayFab SMTP 用户名
+        //     pass: env.SMTP_PASS, // PlayFab SMTP 密码或授权码
+        // },
+        // });
 
         const { success } = await targetDb.prepare(
         'UPDATE PLAYER SET DEVICEID = ? , ATTIME = ? WHERE email = ?'
