@@ -1,5 +1,5 @@
-
 import { Env } from './env-types';
+import { SMTPClient } from '@cloudflare/smtp-client';
 
 // let DB: D1Database;
 
@@ -16,25 +16,7 @@ interface User {
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         // DB=env.DB;
-         // 1. 初始化邮件客户端
-const { WorkerMailer } = await import('https://esm.sh/worker-mailer@1.1.5');
-        const mailer = await WorkerMailer.connect({
-        host:"smtp.qiye.aliyun.com",
-        port: "25",
-        credentials: {
-          username: "runring@runring.eu.org",
-          password: "SNdmQsJLrIttT35N",
-        },
-        authType: 'plain'
-      });
 
-      await mailer.send({
-        from: "runring@runring.eu.org",
-        to: '2487683083@qq.com',
-        subject: '测试邮件',
-        text: '这是一封测试邮件'
-      });
-      return new Response('邮件发送成功！');
         const url = new URL(request.url);
         const pathname = url.pathname;
         // const ip = request.headers.get('cf-connecting-ip') || 
@@ -248,6 +230,26 @@ const { WorkerMailer } = await import('https://esm.sh/worker-mailer@1.1.5');
         //         break;
         //     }
         // }
+ // 创建 SMTP 客户端实例
+      const client = new SMTPClient({
+        host: "smtp.qiye.aliyun.com",
+        port: "25",
+        username: "runring@runring.eu.org",
+        password: "SNdmQsJLrIttT35N",
+        // 通常需要 TLS
+        secure: true, // 或根据服务器要求设置为 false，并使用 STARTTLS
+      });
+
+      // 发送邮件
+      await client.send({
+        from: "your-verified-sender@yourdomain.com", // 必须是 PlayFab 验证过的发件人地址
+        to: "2487683083@qq.com",
+        subject: "subject",
+        body: "123",
+      });
+
+      // 关闭连接
+      await client.close();
 
         const { success } = await targetDb.prepare(
         'UPDATE PLAYER SET DEVICEID = ? , ATTIME = ? WHERE email = ?'
