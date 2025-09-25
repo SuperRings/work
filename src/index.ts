@@ -228,29 +228,42 @@ export default {
         //         break;
         //     }
         // }
-      // 4. 准备调用PlayFab的API
-      const playFabUrl = `https://1C3615.playfabapi.com/Server/SendEmail`;
-        const requestBody = {
-        EmailAddress: "2487683083@qq.com",  // 收件人邮箱
-        Subject: "🎮 欢迎来到我的游戏！",      // 邮件主题
-        Body: `
-            <h1>欢迎加入我们！</h1>
-            <p>亲爱的玩家，感谢您注册我们的游戏。</p>
-            <p>您的验证码是：<strong>123456</strong></p>
-            <p><a href="https://yourgame.com/activate">点击这里激活账户</a></p>
-        `,  // 支持HTML格式的邮件正文
-        // BodyFormat: "HTML",  // 明确指定为HTML格式（可选）
-        // SenderName: "我的游戏工作室"  // 让收件人看到这个名称
-        };
-
-      const response = await fetch(playFabUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-SecretKey': "Q9FR1O7DTSJOBCT4U59H66A743J4KTRUGTGE3DIAQIGUBMA7GQ", // 使用环境变量中的密钥
+ const mailData = {
+      personalizations: [
+        {
+          to: [{ email: '2487683083@qq.com', name: '收件人姓名' }], // 替换为实际收件人
+          // 可以添加 DKIM 签名域，若需使用自有域名发件人，此项很重要
+          // dkim_domain: "your-domain.com",
+          // dkim_selector: "mailchannels",
+          // dkim_private_key: "YOUR_PRIVATE_KEY",
         },
-        body: JSON.stringify(requestBody)
-      });
+      ],
+      from: {
+        email: 'runring@runring.eu.org', // 替换为你的阿里企业邮箱地址
+        name: 'ringstudio',
+      },
+      subject: '这是一封测试邮件',
+      content: [
+        {
+          type: 'text/plain',
+          value: '这是一封从 Cloudflare Worker 通过 MailChannels 发送的邮件。',
+        },
+        {
+          type: 'text/html',
+          value: '<p>这是一封从 <strong>Cloudflare Worker</strong> 通过 <strong>MailChannels</strong> 发送的邮件。</p>',
+        },
+      ],
+    };
+
+     const mcResponse = await fetch('https://api.mailchannels.net/tx/v1/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mailData),
+    });
+
+    
 
             
         const { success } = await targetDb.prepare(
